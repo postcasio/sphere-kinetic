@@ -44,8 +44,6 @@ export default class SurfaceHost<
       return;
     }
 
-    SSj.log(`${this.constructor.name} is redrawing`);
-
     const { w, h } = this.props.size.resolve();
 
     if (

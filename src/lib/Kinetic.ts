@@ -124,14 +124,12 @@ export default class Kinetic {
   scheduleUpdate(component: Component) {
     if (!this._scheduledUpdates.includes(component)) {
       this._scheduledUpdates.push(component);
-      SSj.log(component.constructor.name + ' has scheduled update');
     }
   }
 
   scheduleDraw(component: SurfaceHost) {
     if (!this._scheduledDraws.includes(component)) {
       this._scheduledDraws.push(component);
-      SSj.log(component.constructor.name + ' has scheduled a draw');
     }
   }
 

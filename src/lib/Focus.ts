@@ -35,7 +35,6 @@ export default function Focus<P extends {}, S extends {}>(
     __kinetic_focus: boolean = true;
 
     render(): Node | Array<Node> {
-      SSj.log(`Render Focus with ${this.props.children!.length} children`);
       return wrappedComponent
         ? Kinetic.createElement(
             wrappedComponent,

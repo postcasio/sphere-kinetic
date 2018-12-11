@@ -77,8 +77,6 @@ export default class Component<P = {}, S = {}> {
   }
 
   update(): void {
-    SSj.log('Updating ' + this.constructor.name);
-
     this.componentWillUpdate();
 
     let children = flattenNodes(this.render());
@@ -117,7 +115,6 @@ export default class Component<P = {}, S = {}> {
   }
 
   receiveProps(newProps: P): void {
-    SSj.log(`${this.constructor.name} received new props`);
     this.props = bindProps(newProps, this);
 
     this.update();
@@ -136,9 +133,6 @@ export default class Component<P = {}, S = {}> {
   }
 
   draw(surface: Surface): void {
-    SSj.log(
-      `Drawing ${this.constructor.name} (${this.children.length} children)`
-    );
     for (const component of this.children) {
       component.draw(surface);
     }

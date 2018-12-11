@@ -8,7 +8,6 @@ export enum Dimension {
 export default new class DimensionCalculationStrategies {
   Maximum = function(dimension: Dimension) {
     return function(this: Component): number {
-      SSj.log(`Getting Maximum(${dimension}) of ${this.constructor.name}`);
       const m = dimension === 'width' ? 'getNaturalWidth' : 'getNaturalHeight';
       return this.children.reduce((res: number, child: Component) => {
         return Math.max(res, child[m]());
@@ -18,7 +17,6 @@ export default new class DimensionCalculationStrategies {
 
   Minimum = function(dimension: Dimension) {
     return function(this: Component): number {
-      SSj.log(`Getting Minimum(${dimension}) of ${this.constructor.name}`);
       const m = dimension === 'width' ? 'getNaturalWidth' : 'getNaturalHeight';
       return this.children.reduce((res: number, child: Component) => {
         return Math.min(res, child[m]());
@@ -28,7 +26,6 @@ export default new class DimensionCalculationStrategies {
 
   Sum = function(dimension: Dimension) {
     return function(this: Component): number {
-      SSj.log(`Getting Sum(${dimension}) of ${this.constructor.name}`);
       const m = dimension === 'width' ? 'getNaturalWidth' : 'getNaturalHeight';
       return this.children.reduce((res: number, child: Component) => {
         return res + child[m]();
@@ -38,7 +35,6 @@ export default new class DimensionCalculationStrategies {
 
   First = function(dimension: Dimension) {
     return function(instance: Component): number {
-      SSj.log(`Getting First(${dimension}) of ${instance.constructor.name}`);
       const m = dimension === 'width' ? 'getNaturalWidth' : 'getNaturalHeight';
 
       if (instance.children.length === 0) {

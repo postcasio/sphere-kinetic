@@ -18,14 +18,11 @@ export default class Text extends Primitive<TextProps> {
 
   draw(target: Surface): void {
     if (!this.props.at) {
-      SSj.log(`Text "${this.props.content}" has no position`);
       return;
     }
 
     const { at, fillColor } = this.props;
     const { x, y } = at.resolve();
-
-    SSj.log(`Drawing Text<"${this.props.content}"@${x},${y}>}`);
 
     Font.Default.drawText(target, x, y, this.props.content, fillColor);
   }
