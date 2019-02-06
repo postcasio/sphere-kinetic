@@ -2,23 +2,16 @@ import Prim from 'prim';
 import Node from '../Node';
 import { PositionProps, SizeProps } from '../Props';
 import Primitive from './Primitive';
+import Component from '../Component';
 
-interface SurfaceHostProps extends PositionProps, SizeProps {
+export interface SurfaceHostProps extends PositionProps, SizeProps {
   children?: Node[];
 }
 
-// type DrawFunction = (...args: Array<any>) => any;
-
-// type DrawOperation = [DrawFunction, ...Array<any>];
-
-// interface DrawOperationCacheEntry {
-//   op: DrawOperation;
-//   component: Primitive;
-// };
-
 export default class SurfaceHost<
-  P extends SurfaceHostProps = SurfaceHostProps
-> extends Primitive<P> {
+  P extends SurfaceHostProps = SurfaceHostProps,
+  S = {}
+> extends Primitive<P, S> {
   surface?: Surface;
 
   constructor(props: P) {
@@ -33,12 +26,6 @@ export default class SurfaceHost<
     return this.props.children || [];
   }
 
-  update() {
-    const claim = this._kinetic.claimSurfaceHost(this);
-    Primitive.prototype.update.apply(this);
-    claim.release();
-  }
-
   drawSurface() {
     if (!this.props.size) {
       return;
@@ -46,18 +33,10 @@ export default class SurfaceHost<
 
     const { w, h } = this.props.size.resolve();
 
-    if (
-      !this.surface ||
-      w !== this.surface.width ||
-      h !== this.surface.height
-    ) {
-      this.surface = new Surface(w, h, Color.Transparent);
-    } else if (this.surface) {
-      Prim.drawSolidRectangle(this.surface, 0, 0, w, h, Color.Transparent);
-    }
+    const surface = this.prepareSurface(w, h);
 
-    for (const child of this.children) {
-      child.draw(this.surface);
+    for (const child of this.components) {
+      child.draw(surface);
     }
   }
 
@@ -68,4 +47,24 @@ export default class SurfaceHost<
       Prim.blit(target, x, y, this.surface);
     }
   }
+
+  prepareSurface(w: number, h: number) {
+    if (
+      !this.surface ||
+      w !== this.surface.width ||
+      h !== this.surface.height
+    ) {
+      this.surface = new Surface(w, h, Color.Transparent);
+    } else if (this.surface) {
+      this.surface.blendOp = BlendOp.Replace;
+      Prim.drawSolidRectangle(this.surface, 0, 0, w, h, Color.Transparent);
+      this.surface.blendOp = BlendOp.Default;
+    }
+
+    return this.surface;
+  }
+}
+
+export function isSurfaceHost(component: any): component is SurfaceHost {
+  return component instanceof SurfaceHost;
 }

@@ -8,3 +8,7 @@ export interface PositionProps {
 export interface SizeProps {
   size?: Size;
 }
+
+export interface RefProps<T> {
+  ref?: (component: T) => void;
+}

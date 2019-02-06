@@ -1,15 +1,14 @@
-import lodash from 'lodash';
 import { isBindable } from './Bindable';
-// import DimensionCalculationStrategies, {
-//   Dimension
-// } from './DimensionCalculationStrategies';
 import Element, { isElement } from './Element';
-import Kinetic from './Kinetic';
+
 import Node, { flattenNodes, instantiateNode } from './Node';
-import DimensionCalculationStrategies, {
+
+import Kinetic, {
+  SurfaceHost,
+  isSurfaceHost,
+  DimensionCalculationStrategies,
   Dimension
-} from './DimensionCalculationStrategies';
-import SurfaceHost from './prim/SurfaceHost';
+} from '../index';
 
 function bindProps<P extends {}>(props: P, component: Component): P {
   for (const prop of Object.values(props)) {
@@ -21,37 +20,53 @@ function bindProps<P extends {}>(props: P, component: Component): P {
   return props;
 }
 
+export type Literal = string | boolean | null | void;
+export type ComponentChild = Literal | Component;
+
 export default class Component<P = {}, S = {}> {
   props: P;
-  children: Component[];
+  components: Component[] = [];
+  children: Array<ComponentChild> = [];
   protected state: S;
 
   protected _kinetic: Kinetic;
-  private _mounted: boolean = true;
-  private _surfaceHost: SurfaceHost | null;
+  private _mounted: boolean = false;
+  private _surfaceHost: SurfaceHost | null = null;
   private _parent: Component | null = null;
+
+  protected repositioning = false;
 
   constructor(props: P) {
     this.props = bindProps(Object.assign({}, props), this);
     this.state = {} as S;
 
     this._kinetic = Kinetic.current();
-    this.children = [];
-    const host = this._kinetic.getCurrentSurfaceHost();
-
-    this._surfaceHost = host;
 
     this.componentWillMount();
 
     this.state = this.getInitialState();
-
-    this.update();
-
-    this.componentDidMount();
   }
 
   setParent(component: Component | null) {
     this._parent = component;
+
+    let node = component;
+
+    while (node && !isSurfaceHost(node)) {
+      node = node.getParentComponent();
+    }
+
+    if (node) {
+      this._surfaceHost = node;
+    }
+  }
+
+  mount() {
+    this.update();
+
+    this._mounted = true;
+
+    this.componentDidMount();
   }
 
   getInitialState(): S {
@@ -70,6 +85,12 @@ export default class Component<P = {}, S = {}> {
 
   componentDidUnmount() {}
 
+  componentDidReposition() {}
+
+  getDerivedStateFromProps(_newProps: P): Partial<S> {
+    return {};
+  }
+
   render(): Node[] | Node {
     return (
       ((this.props as unknown) as { children: Array<Node> }).children || []
@@ -81,37 +102,70 @@ export default class Component<P = {}, S = {}> {
 
     let children = flattenNodes(this.render());
 
-    this.reconcile(children.filter(isElement));
+    this.reconcile(
+      children
+        .filter(child => !!child)
+        .map(child => (isElement(child) ? child : String(child)))
+    );
 
     this.componentDidUpdate();
 
+    let surfaceHost = this.getSurfaceHost();
     if (
+      !this.repositioning &&
       this._kinetic.hasRootComponent() &&
-      !this._kinetic.isRootComponent(this)
+      !this._kinetic.isRootComponent(this) &&
+      surfaceHost
     ) {
-      this._kinetic.scheduleDraw(this.getSurfaceHost()!);
+      this._kinetic.scheduleDraw(surfaceHost);
     }
   }
 
-  reconcile(incomingChildren: Array<Element>): void {
-    const outgoingChildren = this.children;
-    const newChildren = [];
+  reconcile(incomingChildren: Array<Node>): void {
+    const outgoingChildren: Array<Node> = this.children;
+    const newChildren: Array<ComponentChild> = [];
 
     for (var i = 0; i < outgoingChildren.length; i++) {
-      if (outgoingChildren[i].constructor !== incomingChildren[i].component) {
-        outgoingChildren[i].unmount();
-        newChildren.push(instantiateNode(incomingChildren[i], this));
+      const outgoingChild = outgoingChildren[i];
+      const incomingChild = incomingChildren[i];
+
+      if (
+        incomingChild instanceof Element &&
+        outgoingChild instanceof Component
+      ) {
+        if (incomingChild.component !== outgoingChild.constructor) {
+          outgoingChild.unmount();
+          newChildren.push(instantiateNode(incomingChild, this));
+        } else {
+          outgoingChild.receiveProps(incomingChild.props);
+          newChildren.push(outgoingChild);
+        }
       } else {
-        outgoingChildren[i].receiveProps(incomingChildren[i].props);
-        newChildren.push(outgoingChildren[i]);
+        if (outgoingChild !== incomingChild) {
+          if (outgoingChild instanceof Component) {
+            outgoingChild.unmount();
+          }
+          if (incomingChild instanceof Element) {
+            newChildren.push(instantiateNode(incomingChild, this));
+          } else {
+            newChildren.push(incomingChild as Literal);
+          }
+        } else {
+          newChildren.push(outgoingChild as Literal);
+        }
       }
     }
 
     for (; i < incomingChildren.length; i++) {
-      newChildren.push(instantiateNode(incomingChildren[i], this));
+      if (incomingChildren[i] instanceof Element) {
+        newChildren.push(instantiateNode(incomingChildren[i], this));
+      } else {
+        newChildren.push(incomingChildren[i] as Literal);
+      }
     }
 
     this.children = newChildren;
+    this.components = newChildren.filter(isComponent);
   }
 
   receiveProps(newProps: P): void {
@@ -123,7 +177,7 @@ export default class Component<P = {}, S = {}> {
   unmount(): void {
     this.componentWillUnmount();
 
-    for (const child of this.children) {
+    for (const child of this.components) {
       child.unmount();
     }
 
@@ -132,17 +186,29 @@ export default class Component<P = {}, S = {}> {
     this.componentDidUnmount();
   }
 
+  reposition() {
+    this.repositioning = true;
+
+    for (const child of this.components) {
+      child.reposition();
+    }
+
+    this.componentDidReposition();
+
+    this.repositioning = false;
+  }
+
   draw(surface: Surface): void {
-    for (const component of this.children) {
+    for (const component of this.components) {
       component.draw(surface);
     }
   }
 
-  getNaturalWidth() {
+  getNaturalWidth(): number {
     return DimensionCalculationStrategies.Maximum(Dimension.Width).apply(this);
   }
 
-  getNaturalHeight() {
+  getNaturalHeight(): number {
     return DimensionCalculationStrategies.Maximum(Dimension.Height).apply(this);
   }
 
@@ -168,4 +234,13 @@ export interface ComponentClass<P = {}, S = {}> {
 
 export function isComponentClass(component: any): component is ComponentClass {
   return Component.isPrototypeOf(component);
+}
+
+export function isComponent(component: any): component is Component {
+  return component instanceof Component;
+}
+
+export interface ComponentConstructor<T extends Component> {
+  new (props: T['props']): Component;
+  defaultProps?: Partial<T['props']>;
 }

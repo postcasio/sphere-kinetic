@@ -2,7 +2,8 @@ import Component from './Component';
 
 export default interface Bindable<T> {
   __kinetic_bindable: boolean;
-  bind(component: Component): void;
+  bind(component: Component): T;
+  unbind(): T;
   inherit(): T;
 }
 

@@ -25,29 +25,41 @@ export default class Point implements Bindable<Point> {
   }
 
   inherit() {
-    return new Point([...this._x], [...this._y]);
+    return new Point(this.x, this.y);
+  }
+
+  copy() {
+    return new Point(this._x.slice(), this._y.slice());
   }
 
   x = () => {
-    return ratchet(this._x, function() {
+    return ratchet(this._x, this._boundComponent, function() {
       return 0;
     });
   };
 
   y = () => {
-    return ratchet(this._y, function() {
+    return ratchet(this._y, this._boundComponent, function() {
       return 0;
     });
   };
 
-  addX(x: Notch): Point {
-    this._x.push(x);
+  addX(x: Notch | Notch[]): Point {
+    if (Array.isArray(x)) {
+      this._x = this._x.concat(x);
+    } else {
+      this._x.push(x);
+    }
 
     return this;
   }
 
-  addY(y: Notch): Point {
-    this._y.push(y);
+  addY(y: Notch | Notch[]): Point {
+    if (Array.isArray(y)) {
+      this._y = this._y.concat(y);
+    } else {
+      this._y.push(y);
+    }
 
     return this;
   }
@@ -72,7 +84,10 @@ export default class Point implements Bindable<Point> {
     if (this._boundComponent && this._boundComponent !== component) {
       throw new Error('Tried to bind a Point twice');
     }
+
     this._boundComponent = component;
+
+    return this;
   }
 
   within(otherAt: Point, otherSize: Size): boolean {
@@ -81,5 +96,20 @@ export default class Point implements Bindable<Point> {
     const { w, h } = otherSize.resolve();
 
     return x >= x2 && x <= x2 + w && y >= y2 && y <= y2 + h;
+  }
+
+  unbind() {
+    this._boundComponent = null;
+
+    return this;
+  }
+
+  replaceWith(other: Point) {
+    this._x = [other.x];
+    this._y = [other.y];
+  }
+
+  static get zero() {
+    return new Point(0, 0);
   }
 }

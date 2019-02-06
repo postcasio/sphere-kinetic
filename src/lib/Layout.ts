@@ -3,6 +3,9 @@ import Element from './Element';
 import Node from './Node';
 import { PositionProps, SizeProps } from './Props';
 import Size from './Size';
+import DimensionCalculationStrategies, {
+  Dimension
+} from './DimensionCalculationStrategies';
 
 export interface LayoutProps extends PositionProps, SizeProps {
   flow?: string;
@@ -27,7 +30,7 @@ export default class Layout extends Component<LayoutProps> {
       this.props.children &&
       this.props.children.map(child => {
         let childSize;
-        const childAt = at.inherit();
+        const childAt = at.copy();
 
         if (flow === 'vertical') {
           childSize = new Size(size.w, Size.AUTO);
@@ -43,5 +46,17 @@ export default class Layout extends Component<LayoutProps> {
         });
       })
     );
+  }
+
+  getNaturalWidth() {
+    return this.props.flow === 'vertical'
+      ? DimensionCalculationStrategies.Maximum(Dimension.Width).apply(this)
+      : DimensionCalculationStrategies.Sum(Dimension.Width).apply(this);
+  }
+
+  getNaturalHeight() {
+    return this.props.flow === 'vertical'
+      ? DimensionCalculationStrategies.Sum(Dimension.Height).apply(this)
+      : DimensionCalculationStrategies.Maximum(Dimension.Height).apply(this);
   }
 }

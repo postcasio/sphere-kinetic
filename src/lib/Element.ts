@@ -27,8 +27,23 @@ export default class Element<P = {}> {
   withProps(props: P) {
     return new Element(this.component, Object.assign({}, this.props, props));
   }
+
+  withChildren(children: Array<Node>) {
+    return new Element(this.component, ({ children } as unknown) as P);
+  }
 }
 
 export function isElement(node: Node): node is Element<any> {
   return node instanceof Element;
+}
+
+export function isElementComponent<T extends ComponentClass>(
+  node: any,
+  componentClass: T
+): node is Element<InstanceType<T>['props']> {
+  return (
+    node instanceof Element &&
+    (componentClass === node.component ||
+      componentClass.isPrototypeOf(node.component))
+  );
 }

@@ -8,10 +8,15 @@ export default class Event {
   target: Component;
   currentTarget: Component;
   handler?: keyof FocusEventProps;
+  propagating: boolean = true;
 
   constructor(target: Component, currentTarget: Component) {
     this.target = target;
     this.currentTarget = currentTarget;
+  }
+
+  stopPropagation() {
+    this.propagating = false;
   }
 
   emit() {
@@ -22,7 +27,7 @@ export default class Event {
     let target: Nullable<Component> = this.currentTarget;
     let event: Event = this;
 
-    while (target) {
+    while (target && event.propagating) {
       event = this.clone(target);
 
       if (isFocused(target)) {

@@ -21,10 +21,10 @@ export default class Text extends Primitive<TextProps> {
       return;
     }
 
-    const { at, fillColor } = this.props;
+    const { at, fillColor, font } = this.props;
     const { x, y } = at.resolve();
 
-    Font.Default.drawText(target, x, y, this.props.content, fillColor);
+    font!.drawText(target, x, y, this.props.content, fillColor);
   }
 
   getNaturalHeight() {
@@ -32,6 +32,6 @@ export default class Text extends Primitive<TextProps> {
   }
 
   getNaturalWidth() {
-    return this.props.font!.getTextSize(this.props.content, 0).width;
+    return this.props.font!.getTextSize(this.props.content).width;
   }
 }

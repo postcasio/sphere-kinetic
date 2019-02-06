@@ -5,12 +5,17 @@ import SurfaceHost from './prim/SurfaceHost';
 import Point from './Point';
 import Size from './Size';
 import { PositionProps, SizeProps } from './Props';
-import { isFocused } from './Focus';
+import { isFocused, FocusedComponent, FocusProps } from './Focus';
+import { KeyPressEvent } from '..';
 
 export class MissingRootException extends Error {}
 
 interface KineticInstanceClaim {
   release: () => void;
+}
+
+interface BuiltinProps {
+  ref?: (component: Component) => void;
 }
 
 export default class Kinetic {
@@ -24,7 +29,7 @@ export default class Kinetic {
 
   static createElement<P extends {}>(
     component: ComponentClass<P>,
-    props?: P,
+    props?: P & BuiltinProps,
     ...children: Array<Node>
   ): Element<P> {
     const elementProps = (Object.assign(props || {}, {
@@ -76,15 +81,36 @@ export default class Kinetic {
     return this._root ? true : false;
   }
 
-  render(root: Node, at: Point, size: Size) {
+  render(root: Node) {
     const claim = Kinetic.claim(this);
 
-    // Wrap the incoming component in a surface host
-    const surface = Kinetic.createElement(SurfaceHost, { at, size }, root);
-
-    this._root = instantiateNode(surface);
+    this._root = instantiateNode(root);
 
     claim.release();
+  }
+
+  registerKeyPress(key: Key) {
+    const component = this.getFocusedComponent();
+
+    if (!component) {
+      return;
+    }
+
+    const event = new KeyPressEvent(component, component, key);
+
+    event.emit();
+  }
+
+  getFocusedComponent(): FocusedComponent | null {
+    let top = null;
+
+    if (this._root) {
+      this._walk(this._root, component => {
+        if (isFocused(component)) top = component;
+      });
+    }
+
+    return top;
   }
 
   update() {
@@ -160,7 +186,7 @@ export default class Kinetic {
   }
 
   _walk(node: Component, callback: (node: Component) => void) {
-    for (const child of node.children) {
+    for (const child of node.components) {
       callback(child);
       this._walk(child, callback);
     }

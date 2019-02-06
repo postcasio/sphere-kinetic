@@ -23,7 +23,7 @@ export interface FocusState {}
 
 class FocusedInner<P> extends Component<P & FocusProps, FocusState> {}
 
-export default function Focus<P extends {}, S extends {}>(
+export default function focus<P extends {}, S extends {}>(
   wrappedComponent: ComponentClass<P, S> | null = null
 ): ComponentClass<P & FocusProps, FocusState> {
   return class Focused extends FocusedInner<P> {
@@ -60,8 +60,10 @@ export default function Focus<P extends {}, S extends {}>(
   };
 }
 
-export const Focused = Focus();
+export const Focused = focus();
 
 export function isFocused(component: any): component is FocusedInner<any> {
   return component && component.__kinetic_focus === true;
 }
+
+export type FocusedComponent = FocusedInner<any>;

@@ -8,6 +8,11 @@ export interface ResolvedSize {
   h: number;
 }
 
+export interface Measurable {
+  width: number;
+  height: number;
+}
+
 export default class Size implements Bindable<Size> {
   __kinetic_bindable = true;
 
@@ -17,6 +22,10 @@ export default class Size implements Bindable<Size> {
   private _boundComponent: Nullable<Component> = null;
 
   static readonly AUTO = auto;
+
+  static get auto() {
+    return new Size(Size.AUTO, Size.AUTO);
+  }
 
   constructor(w: Notch | Notch[], h: Notch | Notch[]) {
     this._w = Array.isArray(w) ? w : [w];
@@ -45,12 +54,25 @@ export default class Size implements Bindable<Size> {
     return new Size(this.w, this.h);
   }
 
+  copy() {
+    return new Size(this._w.slice(), this._h.slice());
+  }
+
+  replaceWith(other: Size) {
+    this._w = [other.w];
+    this._h = [other.h];
+  }
+
   w = () => {
-    return ratchet(this._w, () => this.getComponentNaturalWidth());
+    return ratchet(this._w, this._boundComponent, () =>
+      this.getComponentNaturalWidth()
+    );
   };
 
   h = () => {
-    return ratchet(this._h, () => this.getComponentNaturalHeight());
+    return ratchet(this._h, this._boundComponent, () =>
+      this.getComponentNaturalHeight()
+    );
   };
 
   addW(w: Notch): Size {
@@ -87,6 +109,14 @@ export default class Size implements Bindable<Size> {
     }
 
     this._boundComponent = component;
+
+    return this;
+  }
+
+  unbind() {
+    this._boundComponent = null;
+
+    return this;
   }
 
   getComponentNaturalWidth() {
@@ -103,5 +133,9 @@ export default class Size implements Bindable<Size> {
     }
 
     return this._boundComponent.getNaturalHeight();
+  }
+
+  static of(other: Measurable) {
+    return new Size(other.width, other.height);
   }
 }

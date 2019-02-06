@@ -1,18 +1,30 @@
 import Component, { isComponentClass } from './Component';
 import Element, { isElement } from './Element';
 import Fragment, { isFragment } from './Fragment';
+import { RefProps } from './Props';
 
 export type TextNode = string;
 type Node = Element<any> | Fragment | TextNode | void | null | false;
 
 export default Node;
 
-export function instantiateNode(node: Node, parent?: Component): Component {
+export function instantiateNode<T extends Component>(
+  node: Node,
+  parent?: Component
+): T {
   if (isElement(node) && isComponentClass(node.component)) {
     const NodeComponent = node.component;
-    const component = new NodeComponent(node.props);
+    const component: T = new NodeComponent(node.props) as T;
 
     component.setParent(parent || null);
+
+    const ref = (component.props as RefProps<T>).ref;
+    if (ref) {
+      ref(component);
+    }
+
+    component.mount();
+
     return component;
   }
 

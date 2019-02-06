@@ -25,6 +25,8 @@ export default class Rectangle extends Primitive<RectangleProps> {
     const { x, y } = at.resolve();
     const { w, h } = size.resolve();
 
+    SSj.log(`Drawing rect ${w}x${h}@${x},${y}`);
+
     if (fillColor) {
       Prim.drawSolidRectangle(target, x, y, w, h, fillColor);
     }
