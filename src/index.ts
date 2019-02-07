@@ -35,6 +35,7 @@ export {
 } from './lib/AspectRatioAware';
 export { default as Primitive } from './lib/prim/Primitive';
 export { default as Rectangle } from './lib/prim/Rectangle';
+export { default as Line } from './lib/prim/Line';
 export { default as SurfaceHost, isSurfaceHost } from './lib/prim/SurfaceHost';
 export { default as Text } from './lib/prim/Text';
 export {
