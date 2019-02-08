@@ -48,13 +48,13 @@ export default class Layout extends Component<LayoutProps> {
     );
   }
 
-  getNaturalWidth() {
+  getNaturalWidth(): number {
     return this.props.flow === 'vertical'
       ? DimensionCalculationStrategies.Maximum(Dimension.Width).apply(this)
       : DimensionCalculationStrategies.Sum(Dimension.Width).apply(this);
   }
 
-  getNaturalHeight() {
+  getNaturalHeight(): number {
     return this.props.flow === 'vertical'
       ? DimensionCalculationStrategies.Sum(Dimension.Height).apply(this)
       : DimensionCalculationStrategies.Maximum(Dimension.Height).apply(this);
