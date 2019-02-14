@@ -138,4 +138,12 @@ export default class Size implements Bindable<Size> {
   static of(other: Measurable) {
     return new Size(other.width, other.height);
   }
+
+  isAutoWidth(): boolean {
+    return this._w[this._w.length - 1] === Size.AUTO;
+  }
+
+  isAutoHeight(): boolean {
+    return this._h[this._h.length - 1] === Size.AUTO;
+  }
 }

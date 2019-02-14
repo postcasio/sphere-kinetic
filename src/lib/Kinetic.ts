@@ -7,10 +7,11 @@ import Size from './Size';
 import { PositionProps, SizeProps } from './Props';
 import { isFocused, FocusedComponent, FocusProps } from './Focus';
 import { KeyPressEvent } from '..';
+import { LiftedComponent } from './Lift';
 
 export class MissingRootException extends Error {}
 
-interface KineticInstanceClaim {
+interface Claim {
   release: () => void;
 }
 
@@ -26,6 +27,8 @@ export default class Kinetic {
   static currentInstance?: Kinetic;
 
   private _currentSurfaceHost: SurfaceHost | null = null;
+
+  private _lifted: LiftedComponent[] = [];
 
   static createElement<P extends {}>(
     component: ComponentClass<P>,
@@ -47,7 +50,7 @@ export default class Kinetic {
     return Kinetic.currentInstance;
   }
 
-  static claim(instance: Kinetic): KineticInstanceClaim {
+  static claim(instance: Kinetic): Claim {
     const oldInstance = Kinetic.currentInstance;
     Kinetic.currentInstance = instance;
     return {
@@ -59,7 +62,16 @@ export default class Kinetic {
 
   constructor() {}
 
-  claimSurfaceHost(instance: SurfaceHost): KineticInstanceClaim {
+  registerLift(component: LiftedComponent): Claim {
+    this._lifted.push(component);
+    return {
+      release: () => {
+        this._lifted = this._lifted.filter(c => c !== component);
+      }
+    };
+  }
+
+  claimSurfaceHost(instance: SurfaceHost): Claim {
     const oldInstance = this._currentSurfaceHost;
     this._currentSurfaceHost = instance;
     return {
@@ -141,8 +153,12 @@ export default class Kinetic {
     }
 
     const claim = Kinetic.claim(this);
-
+    Surface.Screen.blendOp = BlendOp.Default;
     this._root.draw(Surface.Screen);
+
+    for (const component of this._lifted) {
+      component.drawLifted(Surface.Screen);
+    }
 
     claim.release();
   }

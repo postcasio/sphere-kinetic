@@ -2,7 +2,8 @@ export {
   default as Component,
   ComponentChild,
   Literal,
-  ComponentConstructor
+  ComponentConstructor,
+  isComponent
 } from './lib/Component';
 export { default } from './lib/Kinetic';
 export { default as Bindable } from './lib/Bindable';
@@ -36,9 +37,15 @@ export {
 export { default as Primitive } from './lib/prim/Primitive';
 export { default as Rectangle } from './lib/prim/Rectangle';
 export { default as Line } from './lib/prim/Line';
-export { default as SurfaceHost, isSurfaceHost } from './lib/prim/SurfaceHost';
+export {
+  default as SurfaceHost,
+  isSurfaceHost,
+  SurfaceHostProps
+} from './lib/prim/SurfaceHost';
 export { default as Text } from './lib/prim/Text';
 export {
   default as DimensionCalculationStrategies,
   Dimension
 } from './lib/DimensionCalculationStrategies';
+export { default as lift } from './lib/Lift';
+export { IFont } from './lib/IFont';

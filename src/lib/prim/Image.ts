@@ -58,7 +58,8 @@ export default class Image extends Primitive<ImageProps, ImageState>
 
     promise.then(texture => {
       this.setState({
-        texture
+        texture,
+        shape: createShape(texture)
       });
     });
   }
@@ -94,12 +95,17 @@ export default class Image extends Primitive<ImageProps, ImageState>
   }
 
   draw(target: Surface) {
-    if (!this.props.at || !this.props.size || !this.state.texture) {
+    if (
+      !this.props.at ||
+      !this.props.size ||
+      !this.state.texture ||
+      !this.state.shape
+    ) {
       return;
     }
 
     const { at, size } = this.props;
-    const { texture, shape } = this.state;
+    const { shape } = this.state;
     const { x, y } = at.resolve();
     const { w, h } = size.resolve();
 

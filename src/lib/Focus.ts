@@ -1,12 +1,13 @@
 import Component, { ComponentClass } from './Component';
 import Node from './Node';
 import Kinetic from './Kinetic';
-import lodash from 'lodash';
+import omit from 'lodash/omit';
 import { isBindable } from './Bindable';
 import Event from './events/Event';
 import KeyDownEvent from './events/KeyDownEvent';
 import KeyUpEvent from './events/KeyUpEvent';
 import KeyPressEvent from './events/KeyPressEvent';
+import { PositionProps, SizeProps, rebindProps } from './Props';
 
 export interface FocusEventProps {
   onKeyDown?: (event: KeyDownEvent) => void;
@@ -15,7 +16,7 @@ export interface FocusEventProps {
   onClick?: (event: Event) => void;
 }
 
-export interface FocusProps extends FocusEventProps {
+export interface FocusProps extends FocusEventProps, SizeProps, PositionProps {
   children?: Array<Node>;
 }
 
@@ -38,21 +39,15 @@ export default function focus<P extends {}, S extends {}>(
       return wrappedComponent
         ? Kinetic.createElement(
             wrappedComponent,
-            (lodash(this.props)
-              .omit([
+            rebindProps(
+              omit(this.props, [
                 'onKeyDown',
                 'onKeyUp',
                 'onKeyPress',
                 'onClick',
                 'children'
               ])
-              .mapValues(value => {
-                if (isBindable(value)) {
-                  return value.inherit();
-                }
-                return value;
-              })
-              .value() as unknown) as P,
+            ),
             ...(this.props.children || [])
           )
         : this.props.children;

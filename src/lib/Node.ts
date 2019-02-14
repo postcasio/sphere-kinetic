@@ -10,13 +10,17 @@ export default Node;
 
 export function instantiateNode<T extends Component>(
   node: Node,
-  parent?: Component
+  parent?: Component,
+  enableDrawScheduling: boolean = true
 ): T {
   if (isElement(node) && isComponentClass(node.component)) {
     const NodeComponent = node.component;
     const component: T = new NodeComponent(node.props) as T;
 
     component.setParent(parent || null);
+    component.enableDrawScheduling(
+      !(component as any).__kinetic_lift && enableDrawScheduling
+    );
 
     const ref = (component.props as RefProps<T>).ref;
     if (ref) {

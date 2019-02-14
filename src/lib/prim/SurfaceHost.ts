@@ -19,22 +19,13 @@ export interface SurfaceHostProps extends PositionProps, SizeProps {
 //   Blend.Zero
 // );
 
-export const DefaultKeepSourceAlphaBlendOp = new BlendOp(
+export const DefaultBlendOp = new BlendOp(
   BlendType.Add,
   Blend.Alpha,
   Blend.AlphaInverse, // (s.rgb * s.a) + (d.rgb * (1 - s.a)) = standard alpha blend
   BlendType.Add,
   Blend.One,
-  Blend.Zero // (1 * s.a) + (0 * d.a) = copy src alpha to dest
-);
-
-export const DefaultKeepDestAlphaBlendOp = new BlendOp(
-  BlendType.Add,
-  Blend.Alpha,
-  Blend.AlphaInverse, // (s.rgb * s.a) + (d.rgb * (1 - s.a)) = standard alpha blend
-  BlendType.Add,
-  Blend.Zero,
-  Blend.One // (0 * s.a) + (1 * d.a) = copy src alpha to dest
+  Blend.One // (1 * s.a) + (0 * d.a) = copy src alpha to dest
 );
 
 export default class SurfaceHost<
@@ -44,7 +35,7 @@ export default class SurfaceHost<
   surface?: Surface;
 
   static defaultProps = {
-    blendOp: DefaultKeepSourceAlphaBlendOp,
+    blendOp: DefaultBlendOp,
     color: new Color(0, 0, 0, 0)
   };
 

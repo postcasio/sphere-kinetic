@@ -1,5 +1,5 @@
 import { isBindable } from './Bindable';
-import Element, { isElement } from './Element';
+import Element, { isElement, isElementComponent } from './Element';
 
 import Node, { flattenNodes, instantiateNode } from './Node';
 
@@ -33,6 +33,7 @@ export default class Component<P = {}, S = {}> {
   private _mounted: boolean = false;
   private _surfaceHost: SurfaceHost | null = null;
   private _parent: Component | null = null;
+  protected _shouldScheduleSurfaceHostDraw: boolean = true;
 
   protected repositioning = false;
 
@@ -62,6 +63,12 @@ export default class Component<P = {}, S = {}> {
   }
 
   mount() {
+    if (this._mounted) {
+      throw new Error(
+        'Tried to mount the same ' + this.constructor.name + ' twice'
+      );
+    }
+
     this.update();
 
     this._mounted = true;
@@ -97,6 +104,10 @@ export default class Component<P = {}, S = {}> {
     );
   }
 
+  enableDrawScheduling(enabled: boolean) {
+    this._shouldScheduleSurfaceHostDraw = enabled;
+  }
+
   update(): void {
     this.componentWillUpdate();
 
@@ -110,14 +121,16 @@ export default class Component<P = {}, S = {}> {
 
     this.componentDidUpdate();
 
-    let surfaceHost = this.getSurfaceHost();
-    if (
-      !this.repositioning &&
-      this._kinetic.hasRootComponent() &&
-      !this._kinetic.isRootComponent(this) &&
-      surfaceHost
-    ) {
-      this._kinetic.scheduleDraw(surfaceHost);
+    if (this._shouldScheduleSurfaceHostDraw) {
+      let surfaceHost = this.getSurfaceHost();
+      if (
+        !this.repositioning &&
+        this._kinetic.hasRootComponent() &&
+        !this._kinetic.isRootComponent(this) &&
+        surfaceHost
+      ) {
+        this._kinetic.scheduleDraw(surfaceHost);
+      }
     }
   }
 
@@ -135,18 +148,30 @@ export default class Component<P = {}, S = {}> {
       ) {
         if (incomingChild.component !== outgoingChild.constructor) {
           outgoingChild.unmount();
-          newChildren.push(instantiateNode(incomingChild, this));
+          newChildren.push(
+            instantiateNode(
+              incomingChild,
+              this,
+              this._shouldScheduleSurfaceHostDraw
+            )
+          );
         } else {
           outgoingChild.receiveProps(incomingChild.props);
           newChildren.push(outgoingChild);
         }
       } else {
         if (outgoingChild !== incomingChild) {
-          if (outgoingChild instanceof Component) {
+          if (isComponent(outgoingChild)) {
             outgoingChild.unmount();
           }
           if (incomingChild instanceof Element) {
-            newChildren.push(instantiateNode(incomingChild, this));
+            newChildren.push(
+              instantiateNode(
+                incomingChild,
+                this,
+                this._shouldScheduleSurfaceHostDraw
+              )
+            );
           } else {
             newChildren.push(incomingChild as Literal);
           }
@@ -158,7 +183,13 @@ export default class Component<P = {}, S = {}> {
 
     for (; i < incomingChildren.length; i++) {
       if (incomingChildren[i] instanceof Element) {
-        newChildren.push(instantiateNode(incomingChildren[i], this));
+        newChildren.push(
+          instantiateNode(
+            incomingChildren[i],
+            this,
+            this._shouldScheduleSurfaceHostDraw
+          )
+        );
       } else {
         newChildren.push(incomingChildren[i] as Literal);
       }
@@ -175,9 +206,11 @@ export default class Component<P = {}, S = {}> {
   }
 
   unmount(): void {
+    SSj.log('Unmounting a component');
     this.componentWillUnmount();
 
     for (const child of this.components) {
+      SSj.log('Unmounting a child of a component');
       child.unmount();
     }
 

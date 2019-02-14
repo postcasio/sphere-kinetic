@@ -2,12 +2,13 @@ import Component from '../Component';
 import Node from '../Node';
 import { PositionProps, SizeProps } from '../Props';
 import Primitive from './Primitive';
+import { IFont } from '../IFont';
 
 interface TextProps extends PositionProps, SizeProps {
   children?: Array<Node>;
   content: string;
   fillColor?: Color;
-  font?: Font;
+  font?: IFont;
 }
 
 export default class Text extends Primitive<TextProps> {
@@ -23,8 +24,10 @@ export default class Text extends Primitive<TextProps> {
 
     const { at, fillColor, font } = this.props;
     const { x, y } = at.resolve();
-
+    const prevOp = target.blendOp;
+    target.blendOp = BlendOp.Default;
     font!.drawText(target, x, y, this.props.content, fillColor);
+    target.blendOp = prevOp;
   }
 
   getNaturalHeight() {
