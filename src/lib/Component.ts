@@ -206,11 +206,9 @@ export default class Component<P = {}, S = {}> {
   }
 
   unmount(): void {
-    SSj.log('Unmounting a component');
     this.componentWillUnmount();
 
     for (const child of this.components) {
-      SSj.log('Unmounting a child of a component');
       child.unmount();
     }
 
