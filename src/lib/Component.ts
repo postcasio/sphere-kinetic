@@ -9,6 +9,7 @@ import Kinetic, {
   DimensionCalculationStrategies,
   Dimension
 } from '../index';
+import { RefProps } from './Props';
 
 function bindProps<P extends {}>(props: P, component: Component): P {
   for (const prop of Object.values(props)) {
@@ -30,7 +31,7 @@ export default class Component<P = {}, S = {}> {
   protected state: S;
 
   protected _kinetic: Kinetic;
-  private _mounted: boolean = false;
+  protected _mounted: boolean = false;
   private _surfaceHost: SurfaceHost | null = null;
   private _parent: Component | null = null;
   protected _shouldScheduleSurfaceHostDraw: boolean = true;
@@ -122,14 +123,24 @@ export default class Component<P = {}, S = {}> {
     this.componentDidUpdate();
 
     if (this._shouldScheduleSurfaceHostDraw) {
-      let surfaceHost = this.getSurfaceHost();
-      if (
-        !this.repositioning &&
-        this._kinetic.hasRootComponent() &&
-        !this._kinetic.isRootComponent(this) &&
-        surfaceHost
-      ) {
+      this.forceRedraw();
+    }
+  }
+
+  forceUpdate() {
+    this.update();
+  }
+
+  forceRedraw() {
+    let surfaceHost = this.getSurfaceHost();
+    if (
+      !this.repositioning &&
+      this._kinetic.hasRootComponent() &&
+      !this._kinetic.isRootComponent(this)
+    ) {
+      while (surfaceHost) {
         this._kinetic.scheduleDraw(surfaceHost);
+        surfaceHost = surfaceHost.getSurfaceHost();
       }
     }
   }
@@ -202,6 +213,11 @@ export default class Component<P = {}, S = {}> {
   receiveProps(newProps: P): void {
     this.props = bindProps(newProps, this);
 
+    const refProp = (this.props as RefProps<Component>).ref;
+    if (refProp) {
+      refProp(this);
+    }
+
     this.update();
   }
 
@@ -244,6 +260,11 @@ export default class Component<P = {}, S = {}> {
   }
 
   setState(newState: Partial<S>) {
+    if (!this._mounted) {
+      throw new Error(
+        `setState on unmounted component ${this.constructor.name}`
+      );
+    }
     Object.assign(this.state, newState);
 
     this._kinetic.scheduleUpdate(this);

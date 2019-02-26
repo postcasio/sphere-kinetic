@@ -47,5 +47,4 @@ export {
   default as DimensionCalculationStrategies,
   Dimension
 } from './lib/DimensionCalculationStrategies';
-export { default as lift } from './lib/Lift';
 export { IFont } from './lib/IFont';

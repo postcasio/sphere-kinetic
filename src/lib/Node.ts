@@ -18,9 +18,7 @@ export function instantiateNode<T extends Component>(
     const component: T = new NodeComponent(node.props) as T;
 
     component.setParent(parent || null);
-    component.enableDrawScheduling(
-      !(component as any).__kinetic_lift && enableDrawScheduling
-    );
+    component.enableDrawScheduling(true);
 
     const ref = (component.props as RefProps<T>).ref;
     if (ref) {

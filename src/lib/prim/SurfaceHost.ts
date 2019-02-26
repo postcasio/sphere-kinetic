@@ -3,6 +3,7 @@ import Node from '../Node';
 import { PositionProps, SizeProps } from '../Props';
 import Primitive from './Primitive';
 import Component from '../Component';
+import Kinetic from '../Kinetic';
 
 export interface SurfaceHostProps extends PositionProps, SizeProps {
   children?: Node[];
@@ -44,7 +45,7 @@ export default class SurfaceHost<
   }
 
   componentDidUpdate() {
-    this.drawSurface();
+    Kinetic.current().scheduleDraw(this);
   }
 
   render(): Node[] | Node {
